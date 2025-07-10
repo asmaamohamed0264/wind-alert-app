@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  # Serviciul pentru Frontend (React)
+  frontend:
+    build:
+      context: ./frontend # Calea către codul frontend
+      args:
+        # Această variabilă este trimisă în Dockerfile-ul de frontend
+        # Înlocuiește 'http://backend:3001' cu URL-ul public al backend-ului tău dacă e necesar
+        REACT_APP_BACKEND_URL: http://backend:3001 
+    ports:
+      - "8080:80" # Mapează portul 8080 al gazdei la portul 80 al containerului
+    restart: unless-stopped
+
+  # Serviciul pentru Backend (Node.js)
+  backend:
+    build:
+      context: ./backend # Calea către codul backend
+    ports:
+      - "3001:3001" # Mapează portul 3001
+    environment:
+      # Aici vei adăuga variabilele de mediu secrete în interfața Coolify
+      - TWILIO_ACCOUNT_SID
+      - TWILIO_AUTH_TOKEN
+      - TWILIO_PHONE_NUMBER
+      - PORT=3001
+    restart: unless-stopped
