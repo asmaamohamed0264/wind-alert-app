@@ -1,7 +1,7 @@
 // Configurări aplicație
 export const CONFIG = {
   API_KEY: process.env.REACT_APP_OPENWEATHER_API_KEY || '',
-  BACKEND_URL: process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001',
+  BACKEND_URL: process.env.REACT_APP_BACKEND_URL || 'https://wind-alert-app-backend.coolify.qub3.uk',
   MOCK_API: process.env.REACT_APP_MOCK_API === 'true' || !process.env.REACT_APP_OPENWEATHER_API_KEY,
   CITY: 'Bucharest',
   UPDATE_INTERVAL: 30 * 60 * 1000, // 30 minute

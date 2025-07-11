@@ -3,6 +3,7 @@ import { CONFIG } from '../config/constants';
 class WeatherService {
   constructor() {
     this.baseUrl = 'https://api.openweathermap.org/data/2.5';
+    this.backendUrl = process.env.REACT_APP_BACKEND_URL || CONFIG.BACKEND_URL;
   }
 
   // Generează date mock pentru testare

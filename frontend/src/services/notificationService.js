@@ -63,7 +63,8 @@ class NotificationService {
     }
 
     try {
-      const response = await fetch(`${CONFIG.BACKEND_URL}/api/send-sms`, {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || CONFIG.BACKEND_URL;
+      const response = await fetch(`${backendUrl}/api/send-sms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +102,8 @@ class NotificationService {
   // Testează conectivitatea cu backend-ul
   async testBackendConnection() {
     try {
-      const response = await fetch(`${CONFIG.BACKEND_URL}/api/health`);
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || CONFIG.BACKEND_URL;
+      const response = await fetch(`${backendUrl}/api/health`);
       return response.ok;
     } catch (error) {
       console.error('Backend-ul nu este disponibil:', error);
