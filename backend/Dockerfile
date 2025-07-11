@@ -13,7 +13,6 @@ COPY package*.json ./
 # Instalăm dependențele proiectului
 RUN npm install --production && npm cache clean --force
 
-
 # Creăm un utilizator non-root pentru securitate
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
