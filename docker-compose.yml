@@ -1,27 +1,47 @@
 version: '3.8'
+
 services:
   # Serviciul pentru Frontend (React)
   frontend:
     build:
-      context: ./frontend # Calea către codul frontend
+      context: ./frontend
+      dockerfile: Dockerfile
       args:
-        # Această variabilă este trimisă în Dockerfile-ul de frontend
-        # Înlocuiește 'http://backend:3001' cu URL-ul public al backend-ului tău dacă e necesar
-        REACT_APP_BACKEND_URL: http://backend:3001 
+        # URL-ul backend-ului va fi setat automat de Coolify
+        REACT_APP_BACKEND_URL: ${BACKEND_URL:-http://backend:3001}
+        REACT_APP_OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+        REACT_APP_MOCK_API: ${MOCK_API:-true}
     ports:
-      - "8080:80" # Mapează portul 8080 al gazdei la portul 80 al containerului
+      - "80:80"
     restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
 
   # Serviciul pentru Backend (Node.js)
   backend:
     build:
-      context: ./backend # Calea către codul backend
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
-      - "3001:3001" # Mapează portul 3001
+      - "3001:3001"
     environment:
-      # Aici vei adăuga variabilele de mediu secrete în interfața Coolify
-      - TWILIO_ACCOUNT_SID
-      - TWILIO_AUTH_TOKEN
-      - TWILIO_PHONE_NUMBER
+      # Variabile de mediu care vor fi setate în Coolify
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
       - PORT=3001
+      - NODE_ENV=production
+      - FRONTEND_URL=${FRONTEND_URL:-http://frontend}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  default:
+    name: wind-alert-network
