@@ -10,8 +10,8 @@ WORKDIR /usr/src/app
 # Copiem fișierele package.json și package-lock.json
 COPY package*.json ./
 
-# Instalăm dependențele proiectului (doar production)
-RUN npm ci --only=production && npm cache clean --force
+# Instalăm dependențele proiectului (folosim npm install în loc de npm ci)
+RUN npm install --production && npm cache clean --force
 
 # Creăm un utilizator non-root pentru securitate
 RUN addgroup -g 1001 -S nodejs && \
