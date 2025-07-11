@@ -6,8 +6,8 @@ WORKDIR /app
 # Copiem package.json și package-lock.json
 COPY package*.json ./
 
-# Instalăm dependențele
-RUN npm install --production && npm cache clean --force
+# Instalăm TOATE dependențele (inclusiv devDependencies pentru build)
+RUN npm install && npm cache clean --force
 
 # Copiem restul fișierelor
 COPY . ./
