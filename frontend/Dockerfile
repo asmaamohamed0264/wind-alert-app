@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalăm dependențele
-RUN npm ci --only=production
+RUN npm install --production && npm cache clean --force
 
 # Copiem restul fișierelor
 COPY . ./
