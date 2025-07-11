@@ -10,7 +10,7 @@ WORKDIR /usr/src/app
 # Copiem fișierele package.json și package-lock.json
 COPY package*.json ./
 
-# Instalăm dependențele proiectului (folosim npm install în loc de npm ci)
+# Instalăm dependențele proiectului
 RUN npm install --production && npm cache clean --force
 
 
