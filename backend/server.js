@@ -1,8 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const cors = require('cors'); // <-- Am adăugat linia asta
+const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const { generalLimiter, errorHandler } = require('./middleware/security');
 const apiRoutes = require('./routes/api');
 
 // Încarcă variabilele de mediu din .env
@@ -11,42 +11,79 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// --- Configurare CORS ---
-// Permite cereri doar de la adresa frontend-ului specificată în .env
-const frontendUrl = process.env.FRONTEND_URL;
-if (!frontendUrl) {
-  console.warn('ATENȚIE: Variabila de mediu FRONTEND_URL nu este setată.');
+// Verifică variabilele de mediu critice
+const requiredEnvVars = ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_PHONE_NUMBER'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ EROARE: Variabile de mediu lipsă:', missingVars.join(', '));
+  console.error('Aplicația va funcționa în modul limitat.');
 }
-app.use(cors({
-  origin: frontendUrl
-}));
-// ------------------------
 
-// Middlewares de securitate
+// Configurare CORS
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
+  console.warn('⚠️ ATENȚIE: FRONTEND_URL nu este setat în producție. CORS va permite toate originile.');
+}
+
+app.use(cors(corsOptions));
+
+// Middleware de securitate
 app.use(helmet());
-app.use(express.json()); // Pentru a parsa body-ul cererilor JSON
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate Limiting pentru a preveni abuzul
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minute
-  max: 100, // Limitează fiecare IP la 100 de cereri pe "fereastra" de timp
-  standardHeaders: true,
-  legacyHeaders: false, 
-  message: 'Prea multe cereri de la acest IP, vă rugăm încercați din nou după 15 minute'
-});
-app.use('/api/', limiter);
+// Rate limiting general
+app.use('/api/', generalLimiter);
 
+// Trust proxy pentru rate limiting corect în producție
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 // Rutele pentru API
 app.use('/api', apiRoutes);
 
 // Endpoint de bază pentru a verifica dacă serverul funcționează
 app.get('/', (req, res) => {
-  res.send('Wind Alert App Backend rulează!');
+  res.json({
+    message: 'Wind Alert App Backend rulează!',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
 });
 
+// Middleware pentru gestionarea erorilor (trebuie să fie ultimul)
+app.use(errorHandler);
+
 // Pornirea serverului
-app.listen(PORT, () => {
-  console.log(`Serverul ascultă pe portul ${PORT}`);
-  console.log(`Frontend-ul permis (CORS): ${frontendUrl}`);
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Serverul ascultă pe portul ${PORT}`);
+  console.log(`🌐 Frontend permis (CORS): ${process.env.FRONTEND_URL || 'toate originile'}`);
+  console.log(`🔧 Mediu: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📱 Twilio configurat: ${missingVars.length === 0 ? '✅' : '❌'}`);
+  console.log(`🌤️ OpenWeather API: ${process.env.OPENWEATHER_API_KEY ? '✅' : '❌ (folosind date simulate)'}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM primit. Închidere graceful...');
+  server.close(() => {
+    console.log('✅ Server închis.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT primit. Închidere graceful...');
+  server.close(() => {
+    console.log('✅ Server închis.');
+    process.exit(0);
+  });
 });
