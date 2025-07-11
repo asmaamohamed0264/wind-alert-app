@@ -28,13 +28,13 @@ RUN npm run build
 FROM nginx:stable-alpine
 
 # Copiem configurația Nginx personalizată
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copiem fișierele construite din etapa anterioară
 COPY --from=build /app/build /usr/share/nginx/html
 
 # Adăugăm un script pentru înlocuirea variabilelor de mediu la runtime
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Expunem portul 80
